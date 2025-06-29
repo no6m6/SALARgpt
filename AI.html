@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>salarGPT - ذكاء اصطناعي متطور</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'Cairo', 'Amiri', Arial, sans-serif; background: linear-gradient(135deg, #232526 0%, #414345 100%); color: #fff; }
+    .sidebar {
+      position: fixed; right: 0; top: 0; width: 220px; height: 100vh; background: #23232b; box-shadow: -2px 0 16px #0004; display: flex; flex-direction: column; align-items: center; padding: 32px 10px 10px 10px; z-index: 10;
+    }
+    .sidebar img {
+      width: 80px; height: 80px; border-radius: 50%; margin-bottom: 18px; border: 2px solid #ff0050; box-shadow: 0 2px 12px #0003;
+    }
+    .sidebar .dev-name {
+      font-size: 1.1em; font-weight: bold; color: #ff0050; margin-bottom: 6px; letter-spacing: 1px;
+    }
+    .sidebar .dev-desc {
+      font-size: 0.98em; color: #eee; margin-bottom: 18px; text-align: center; line-height: 1.6;
+    }
+    .sidebar .dev-date {
+      font-size: 0.95em; color: #aaa; margin-bottom: 10px; }
+    .sidebar .dev-btn {
+      background: linear-gradient(90deg, #ff0050 60%, #ff7e5f 100%); color: #fff; border: none; border-radius: 10px; padding: 8px 22px; font-size: 1em; cursor: pointer; font-weight: bold; margin-top: 8px; transition: background 0.2s, transform 0.1s;
+    }
+    .sidebar .dev-btn:hover { background: #e60045; transform: scale(1.04); }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .chat-container { margin-right: 0 !important; }
+    }
+    .chat-container { max-width: 430px; margin: 48px auto 0 auto; background: #23232b; border-radius: 22px; box-shadow: 0 8px 32px #0006; padding: 28px 18px 18px 18px; display: flex; flex-direction: column; min-height: 540px; border: 1.5px solid #ff005033; margin-right: 240px; }
+    .header { background: #222; padding: 24px 0 18px 0; text-align: center; font-size: 2.2em; font-weight: bold; letter-spacing: 2px; color: #ff0050; border-radius: 0 0 30px 30px; box-shadow: 0 4px 24px #0004; font-family: 'Cairo', 'Amiri', Arial, sans-serif; }
+    .messages { flex: 1; overflow-y: auto; margin-bottom: 18px; }
+    .msg { margin: 12px 0; padding: 12px 18px; border-radius: 18px; max-width: 85%; font-size: 1.08em; line-height: 1.7; box-shadow: 0 2px 12px #0002; transition: background 0.2s; }
+    .user { background: linear-gradient(90deg, #ff0050 60%, #ff7e5f 100%); align-self: flex-end; color: #fff; border-bottom-right-radius: 4px; font-family: 'Cairo', Arial, sans-serif; }
+    .bot { background: linear-gradient(90deg, #232526 60%, #414345 100%); align-self: flex-start; color: #fff; border-bottom-left-radius: 4px; font-family: 'Amiri', 'Cairo', Arial, sans-serif; }
+    .input-row { display: flex; gap: 10px; }
+    .input-row input {
+      flex: 1; padding: 13px; border-radius: 12px; border: none; font-size: 1.08em; background: #18181f; color: #fff; outline: none; box-shadow: 0 2px 8px #0002;
+      font-family: 'Cairo', Arial, sans-serif;
+    }
+    .input-row button {
+      background: linear-gradient(90deg, #ff0050 60%, #ff7e5f 100%); color: #fff; border: none; border-radius: 12px; padding: 0 28px; font-size: 1.08em; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px #0002; transition: background 0.2s, transform 0.1s;
+      font-family: 'Cairo', Arial, sans-serif;
+    }
+    .input-row button:hover { background: #e60045; transform: scale(1.04); }
+    ::selection { background: #ff005066; }
+    @media (max-width: 600px) {
+      .chat-container { max-width: 98vw; padding: 8px; }
+      .header { font-size: 1.2em; padding: 12px 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="dev-desc">تم تطوير هذا الذكاء الاصطناعي بواسطة المطور الكردي <b>سالار التقني</b>.<br>لأي اقتراحات أو تطويرات جديدة، استخدم زر "طورني".</div>
+    <div class="dev-date">آخر تطوير: يونيو 2025</div>
+    <button class="dev-btn" onclick="alert('شكراً لاهتمامك! يمكنك التواصل مع سالار التقني لأي تطوير جديد.')">طورني</button>
+  </div>
+  <div class="header">salarGPT - ذكاء اصطناعي متطور</div>
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <form class="input-row" id="chatForm" autocomplete="off">
+      <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." required autofocus />
+      <button type="submit">إرسال</button>
+    </form>
+  </div>
+  <script>
+    const messages = document.getElementById('messages');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + sender;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function sanitizeInput(input) {
+      // إزالة الفراغات الزائدة والرموز غير المفيدة
+      return input.replace(/[\s\u200c]+/g, ' ').replace(/[<>]/g, '').trim();
+    }
+    let lastBotReply = '';
+    // قاعدة بيانات مؤقتة للمعلومات التي يتعلمها الذكاء الاصطناعي
+    let learnedFacts = {
+      'عاصمة اليابان': 'طوكيو',
+      'تعريف البرمجة': 'البرمجة هي عملية كتابة تعليمات وأوامر لجهاز الحاسوب ليقوم بتنفيذها.',
+      'أكبر كوكب': 'أكبر كوكب في المجموعة الشمسية هو المشتري.',
+      'مخترع الهاتف': 'مخترع الهاتف هو ألكسندر غراهام بيل.'
+    };
+
+    function smartAI(input) {
+      input = sanitizeInput(input);
+      if (!input || /^[!@#$%^&*()_+=\-\[\]{};:'",.<>/?|\\]+$/.test(input)) {
+        return 'يرجى كتابة سؤال أو رسالة واضحة.';
+      }
+      // ردود على الأسئلة اليومية باللهجة العراقية والعربية
+      if (/شلونك|شلونج|شخبارك|شخبارج|كيفك|كيف الحال|كيف الأحوال|شلون الأحوال|شونك|شونج|شنو اخبارك|شنو الاخبار|كيف حالك|كيف حالج|كيف يومك|كيف يومج|كيف أمورك|كيف امورك|كيف الأمور|كيف الجو|كيف الصحة|شون الصحة|شلون الصحة|شون الجو|شلون الجو/i.test(input)) {
+        const replies = [
+          'الحمد لله بخير! وأنت شلونك؟',
+          'أنا بخير، شكراً لسؤالك! كيفك أنت؟',
+          'كلشي تمام، إذا تحتاج شي كلمني!',
+          'الأحوال طيبة، وأنت؟',
+          'الحياة حلوة بوجودك!'
+        ];
+        let reply;
+        do { reply = replies[Math.floor(Math.random() * replies.length)]; } while (reply === lastBotReply && replies.length > 1);
+        lastBotReply = reply;
+        return reply;
+      }
+      // معلومات عن سوني
+      if (/سوني|sony/i.test(input)) {
+        return 'سوني (Sony) شركة يابانية عملاقة متخصصة في الإلكترونيات والترفيه، من أشهر منتجاتها بلايستيشن وكاميرات سوني وأجهزة التلفاز.';
+      }
+      // معلومات عن إكس بوكس
+      if (/اكس بوكس|إكس بوكس|xbox/i.test(input)) {
+        return 'إكس بوكس (Xbox) علامة تجارية لألعاب الفيديو من تطوير مايكروسوفت، تشتهر بأجهزة الألعاب المنزلية وخدمة Xbox Game Pass.';
+      }
+      // معلومات عن نينتندو
+      if (/نينتندو|nintendo/i.test(input)) {
+        return 'نينتندو (Nintendo) شركة يابانية رائدة في مجال ألعاب الفيديو، من أشهر أجهزتها Nintendo Switch وسلاسل ألعاب ماريو وزيلدا.';
+      }
+      // معلومات سياسية بسيطة
+      if (/رئيس العراق|من هو رئيس العراق|رئيس جمهورية العراق/i.test(input)) {
+        return 'رئيس جمهورية العراق الحالي هو عبد اللطيف رشيد (2025).';
+      }
+      if (/رئيس الوزراء العراق|من هو رئيس وزراء العراق|رئيس وزراء العراق/i.test(input)) {
+        return 'رئيس وزراء العراق الحالي هو محمد شياع السوداني (2025).';
+      }
+      if (/مجلس النواب العراق|برلمان العراق|مجلس النواب العراقي/i.test(input)) {
+        return 'مجلس النواب العراقي هو السلطة التشريعية في العراق ويتكون من 329 عضواً منتخباً.';
+      }
+      // سوالف عادية
+      if (/شنو رأيك|شنو رايك|ما رأيك|ما رايك|شنو تحب|شنو تفضل|شنو افضل|شنو احسن|شنو احب|شنو رايك/i.test(input)) {
+        return 'رأيي يعتمد على الموضوع! إذا عندك موضوع معين خبرني عنه.';
+      }
+      // دعم العامية العراقية وبعض الصيغ المختلفة
+      const iraqWords = [
+        /شكد سكان العراق|سكان العراق|عدد سكان العراق|كم عدد سكان العراق|كم سكان العراق|سكان دولة العراق|population of iraq|شگد سكان العراق/i,
+        /عاصمة العراق|ما هي عاصمة العراق|capital of iraq|شنو عاصمة العراق|وين عاصمة العراق|عاصمه العراق/i,
+        /لغة العراق|اللغة الرسمية في العراق|ما هي لغة العراق|language of iraq|شنو لغة العراق|شنو اللغات بالعراق/i,
+        /موقع العراق|اين يقع العراق|العراق يقع|iraq location|وين العراق|موقع دولة العراق/i,
+        /عملة العراق|ما هي عملة العراق|currency of iraq|شنو عملة العراق|عملة دولة العراق/i
+      ];
+      if (iraqWords[0].test(input)) {
+        return 'عدد سكان العراق حوالي 43 مليون نسمة حسب تقديرات 2024.';
+      }
+      if (iraqWords[1].test(input)) {
+        return 'عاصمة العراق هي بغداد.';
+      }
+      if (iraqWords[2].test(input)) {
+        return 'اللغة الرسمية في العراق هي العربية، وتوجد أيضاً اللغة الكردية كلغة رسمية في إقليم كردستان.';
+      }
+      if (iraqWords[3].test(input)) {
+        return 'العراق يقع في غرب آسيا ويحده من الشمال تركيا، ومن الشرق إيران، ومن الجنوب الكويت والسعودية، ومن الغرب الأردن وسوريا.';
+      }
+      if (iraqWords[4].test(input)) {
+        return 'عملة العراق هي الدينار العراقي (IQD).';
+      }
+      // إذا سأل عن عاصمة بغداد أو بغداد نفسها
+      if (/عاصمة بغداد|شنو عاصمة بغداد|وين بغداد|بغداد عاصمة شنو|بغداد وين/i.test(input)) {
+        return 'بغداد هي عاصمة العراق.';
+      }
+      // حفظ معلومة جديدة
+      let teachMatch = input.match(/(?:احفظ|تعلم|خزن|تذكر) أن (.+?) (هو|هي|يعني|تعني|=) (.+)/i);
+      if (teachMatch) {
+        let key = teachMatch[1].trim();
+        let value = teachMatch[3].trim();
+        learnedFacts[key] = value;
+        return `تم حفظ المعلومة: ${key} = ${value}`;
+      }
+      // إذا سأل عن معلومة محفوظة
+      for (let key in learnedFacts) {
+        if (input.includes(key)) {
+          return learnedFacts[key];
+        }
+      }
+      // عمليات حسابية: جمع، طرح، ضرب، قسمة
+      let calcMatch = input.match(/([0-9]+)\s*([+\-×x*/÷])\s*([0-9]+)/);
+      if (calcMatch) {
+        let a = parseFloat(calcMatch[1]);
+        let op = calcMatch[2];
+        let b = parseFloat(calcMatch[3]);
+        switch(op) {
+          case '+': return `الناتج: ${a + b}`;
+          case '-': return `الناتج: ${a - b}`;
+          case '×': case 'x': case '*': return `الناتج: ${a * b}`;
+          case '/': case '÷': return b !== 0 ? `الناتج: ${a / b}` : 'لا يمكن القسمة على صفر!';
+        }
+      }
+      // تحويل وحدات: سم إلى متر
+      let cmToM = input.match(/([0-9]+)\s*سم.*(متر|m)/i);
+      if (cmToM) {
+        let cm = parseFloat(cmToM[1]);
+        return `${cm} سم = ${cm/100} متر`;
+      }
+      // تحويل وحدات: متر إلى سم
+      let mToCm = input.match(/([0-9]+)\s*متر.*(سم|cm)/i);
+      if (mToCm) {
+        let m = parseFloat(mToCm[1]);
+        return `${m} متر = ${m*100} سم`;
+      }
+      // تعريفات بسيطة
+      if (/ما هو الماء|تعريف الماء/i.test(input)) {
+        return 'الماء هو مركب كيميائي صيغته H2O وهو ضروري للحياة.';
+      }
+      if (/ما هي الشمس|تعريف الشمس/i.test(input)) {
+        return 'الشمس نجم في مركز المجموعة الشمسية وهي مصدر الضوء والحرارة للأرض.';
+      }
+      // معلومات عامة
+      if (/عاصمة (مصر|egypt)/i.test(input)) {
+        return 'عاصمة مصر هي القاهرة.';
+      }
+      if (/عاصمة (العراق|iraq)/i.test(input)) {
+        return 'عاصمة العراق هي بغداد.';
+      }
+      if (/من هو مخترع الكهرباء/i.test(input)) {
+        return 'يعتبر توماس إديسون ونيكولا تسلا من أبرز رواد الكهرباء.';
+      }
+      if (/كم عدد كواكب المجموعة الشمسية/i.test(input)) {
+        return 'عدد كواكب المجموعة الشمسية هو 8.';
+      }
+      // معرفة درجات الحرارة لبعض المدن
+      let tempMatch = input.match(/درجة الحرارة (في|ب)?\s*([\u0600-\u06FFa-zA-Z ]+)/i);
+      if (tempMatch) {
+        let city = tempMatch[2].trim();
+        const temps = {
+          'بغداد': '42° مئوية',
+          'القاهرة': '36° مئوية',
+          'الرياض': '44° مئوية',
+          'دبي': '41° مئوية',
+          'لندن': '22° مئوية',
+          'باريس': '24° مئوية',
+          'نيويورك': '28° مئوية',
+          'طهران': '35° مئوية',
+          'دمشق': '38° مئوية',
+          'اسطنبول': '29° مئوية',
+        };
+        if (temps[city]) {
+          return `درجة الحرارة في ${city}: ${temps[city]} (بيانات تقريبية)`;
+        } else {
+          return `عذراً، لا أملك بيانات مباشرة عن درجة الحرارة في ${city}. يمكنك البحث في جوجل أو استخدام تطبيق طقس.`;
+        }
+      }
+      // البحث في الويب
+      if (/ابحث|بحث|ابحث في الانترنت|ابحث في الويب|بحث في جوجل|بحث في بينج/i.test(input)) {
+        return 'لا أستطيع البحث في الويب مباشرة، لكن يمكنك استخدام جوجل أو بينج عبر الروابط التالية:\nhttps://www.google.com\nhttps://www.bing.com';
+      }
+      // قاموس عراقي موسع جداً
+      const iraqiDictionary = {
+        'شكو ماكو': 'تقال للسؤال عن الأخبار والأحوال وتعني: ما الجديد؟',
+        'هلاو': 'تحية تعني مرحباً أو أهلاً.',
+        'دايح': 'شخص متعب أو مرهق أو ضايج.',
+        'فدوه': 'تقال للتعبير عن المحبة أو التضحية، وتعني: أفديك بروحي.',
+        'عفية': 'تعني برافو أو أحسنت.',
+        'شسوي': 'ماذا أفعل؟',
+        'شكو': 'ما الجديد؟',
+        'ماكو': 'لا يوجد.',
+        'شكد': 'كم أو كم العدد.',
+        'شغلات': 'أشياء أو أمور.',
+        'سوالف': 'أحاديث أو دردشات.',
+        'دواخ راسي': 'أشعر بالصداع أو التعب.',
+        'حيل': 'جداً أو كثيراً.',
+        'مو': 'ليس أو لا.',
+        'يابه': 'يا رجل أو يا صديقي.',
+        'تعبان': 'مرهق أو متعب.',
+        'خوش': 'جيد أو ممتاز.',
+        'عيني': 'تقال كنداء وتعني يا عزيزي.',
+        'حباب': 'لطيف أو محبوب.',
+        'شباب': 'تقال للجماعة أو الأصدقاء.',
+        'دواخ': 'تعب أو صداع.',
+        'مطي': 'ساذج أو بسيط.',
+        'مزة': 'فتاة جميلة.',
+        'مطيور': 'شخص غريب الأطوار.',
+        'مضيع': 'شخص غير منتبه.',
+        'مضروب': 'شخص غير طبيعي.',
+        'مكسر': 'شخص متعب جداً.',
+        'مخبل': 'مجنون.',
+        'مخوش': 'ليس جيد.',
+        'مستحي': 'خجول.',
+        'مستعجل': 'على عجلة.',
+        'مستوي': 'ناضج أو جاهز.',
+        'مستوي راسي': 'تعبت كثيراً.'
+      };
+      if (/معنى|شنو معنى|يعني شنو|شنو تعني|تعني شنو|شنو قصد|قصدها|قصد/i.test(input)) {
+        for (let word in iraqiDictionary) {
+          if (input.includes(word)) {
+            return `"${word}" باللهجة العراقية: ${iraqiDictionary[word]}`;
+          }
+        }
+      }
+      // إذا كتب المستخدم كلمة عراقية فقط أو جزء منها
+      for (let word in iraqiDictionary) {
+        if (input.includes(word)) {
+          return `"${word}" باللهجة العراقية: ${iraqiDictionary[word]}`;
+        }
+      }
+      // معلومات حديثة عن العراق
+      if (/معلومات عن العراق|العراق|عن العراق|نبذة عن العراق|تعريف العراق|جغرافيا العراق|ثقافة العراق|اقتصاد العراق|تاريخ العراق|عادات العراق|لهجات العراق|محافظات العراق|مدن العراق|انهار العراق|جبال العراق|مناخ العراق|طقس العراق|علم العراق|شعار العراق|دستور العراق|سكان العراق|ديانات العراق|لغات العراق|عشائر العراق|عراق/i.test(input)) {
+        return `معلومات عن العراق (2025):\n- عدد السكان: حوالي 43 مليون نسمة\n- العاصمة: بغداد\n- اللغة الرسمية: العربية والكردية\n- الديانة: الإسلام (أغلبية)، مع وجود أقليات مسيحية وصابئية وأيزيدية\n- العملة: الدينار العراقي (IQD)\n- الجغرافيا: يقع في غرب آسيا، يحده تركيا، إيران، الكويت، السعودية، الأردن، سوريا\n- أهم الأنهار: دجلة والفرات\n- الاقتصاد: يعتمد على النفط بشكل رئيسي\n- الثقافة: غنية بالتراث والشعر والموسيقى والمطبخ العراقي\n- اللهجات: لهجة بغدادية، جنوبية، موصلية، كردية، تركمانية، آشورية\n- أشهر المدن: بغداد، البصرة، الموصل، أربيل، النجف، كربلاء، السليمانية\n- أشهر الأكلات: الدولمة، البرياني، الكباب العراقي، المسكوف\n- أشهر الشعراء: بدر شاكر السياب، الجواهري، نازك الملائكة\n- أشهر المعالم: شارع المتنبي، زقورة أور، الأهوار، قلعة أربيل، نصب الشهيد\n- مناخ العراق: صيف حار وجاف، شتاء معتدل ممطر\n- علم العراق: أحمر وأبيض وأسود مع كلمة "الله أكبر" باللون الأخضر\n- دستور العراق: أُقر عام 2005\n- العشائر: عشائر عربية وكردية وتركمانية وآشورية\n- الرياضة: كرة القدم هي الأكثر شعبية\n- التعليم: جامعات مشهورة مثل جامعة بغداد وجامعة الموصل\n- الإنترنت: متوفر في معظم المدن\n- الكود الدولي: +964`;
+      }
+      // إذا لم يفهم السؤال
+      return 'ما فهمت عليك مضبوط! عيد صياغة السؤال أو وضحلي أكثر باللهجة العراقية أو العربية، أو جرب سؤال مختلف.';
+    }
+
+    chatForm.onsubmit = function(e) {
+      e.preventDefault();
+      const text = userInput.value;
+      addMessage(text, 'user');
+      setTimeout(() => {
+        const reply = smartAI(text);
+        addMessage(reply, 'bot');
+      }, 400);
+      userInput.value = '';
+    };
+
+    // رسائل عاطفية واقعية عشوائية
+    const emotionalMessages = [
+      'مرحباً بك! كيف تشعر اليوم؟',
+      'هل تناولت شيئاً لذيذاً اليوم؟',
+      'تذكر أن تأخذ قسطاً من الراحة، صحتك مهمة!',
+      'إذا احتجت إلى من يسمعك، أنا هنا دائماً.',
+      'ما هو أجمل شيء حدث معك اليوم؟',
+      'هل ترغب في مشاركة قصة أو فكرة؟',
+      'أنت شخص رائع، لا تنسَ ذلك!',
+      'هل هناك شيء يشغل بالك؟',
+      'أحب أن أسمع عن طموحاتك وأحلامك.',
+      'كيف كان يومك حتى الآن؟'
+    ];
+
+    // إرسال رسالة ترحيب تلقائية عند فتح الصفحة
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        addMessage('مرحباً بك في سالار التقني! أنا هنا لأتحدث معك وأساعدك في أي وقت ❤️', 'bot');
+      }, 600);
+      // بدء إرسال رسائل عاطفية كل دقيقة
+      setInterval(() => {
+        // لا ترسل إذا آخر رسالة كانت من المستخدم قبل أقل من 30 ثانية
+        const lastMsg = messages.lastElementChild;
+        if (lastMsg && lastMsg.classList.contains('user')) {
+          const now = Date.now();
+          if (!lastMsg.dataset.time) lastMsg.dataset.time = now;
+          if (now - lastMsg.dataset.time < 30000) return;
+        }
+        // رسالة عشوائية
+        const msg = emotionalMessages[Math.floor(Math.random() * emotionalMessages.length)];
+        addMessage(msg, 'bot');
+      }, 60000); // كل دقيقة
+      userInput.setAttribute('inputmode', 'text');
+      userInput.setAttribute('autocomplete', 'on');
+      userInput.setAttribute('spellcheck', 'false');
+      userInput.style.fontSize = '1.15em';
+    });
+  </script>
+</body>
+</html>
